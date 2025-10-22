@@ -10,12 +10,9 @@ This sketch performs the following tests:
 
 | **Feature**      | **Description**                                                                                                                                   |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Onboard LED**  | Tests the onboard LED with a fade in **Soldered purple** (`#5b2379`).                                                                             |
-| **Onboard D13 LED**  | Tests the onboard simple LED with blinking (specific to NULA Core and CorePlus).                                                                             |
+| **Push Button**  | Prompts the user to press a button by blinking the onboard LED very fast (200ms intervals). |
 | **EasyC Port**   | Configures the device as an I2C master and communicates with a follower device at address `0x30` to ensure no transmission errors.                |
-| **MicroSD Card** | Writes a file (e.g., `test.txt`) to the SD card and reads it back to confirm the slot is working (specific to NULA CorePlus).                 |
-| **Push Button**  | The final step prompts the user to press a button. This writes a value to EEPROM, which disables further testing and goes straight to LED fading. |
-
+| **WiFi**  | The final test, tries to connect to the local network, if it succeeds, data is written to the EEPROM to ensure the device isnt tested again |
 ---
 
 ## ⚙️ Configuration
@@ -35,9 +32,11 @@ The sketch automatically detects and compiles for the selected board in the Ardu
 3. Connect NULA and connect the easyC device and insert SD card (if applicable).
 4. Upload the sketch.
 5. To complete tests push the button when the LED is blinking - **the code will not reach the blinking LED step unless all other features were tested OK**
-6. Repeat steps 3-5 for testing devices in Series
+6. The test completed successfully if the onboard LED slowly fades on and off
+7. The test failed if the onboard LED blinks on/off in 1 second intervals
+8. Repeat steps 3-5 for testing devices in Series
 
-> **Note:** If something went wrong with EasyC or SDCard, the LED will blink RED, and you will be able to see some Serial output at a baud rate of 115200.
+> **Note:** The test failed if the onboard LED blinks on/off in 1 second intervals, you will be able to see some Serial output at a baud rate of 115200.
 
 ---
 
