@@ -6,6 +6,7 @@
 #include <EEPROM.h>
 #include <WiFi.h>
 #include "Wire.h"
+#include "driver/ledc.h"
 
 // Configure EEPROM parameters
 #define EEPROM_SIZE 16
@@ -18,6 +19,15 @@ const char* ssid = "Soldered-testingPurposes";
 const char* pass = "Testing443";
 
 int ledPin = 23;
+const int pwmFreq = 5000;       // Hz
+const int pwmResolution = 8;    // 8-bit (0–255)
+
+int buttonPin = 9;
+
+int brightness = 0;
+int fadeAmount = 5;
+unsigned long lastFadeTime = 0;
+const int fadeDelay = 30;       // ms per step
 
 /**
  * @brief Function to test if a follower (slave) device is connected over I2C
@@ -53,9 +63,9 @@ void blinkRedAndHalt()
     while (true)
     {
         digitalWrite(ledPin, LOW);
-        delay(400);
+        delay(1000);
         digitalWrite(ledPin, HIGH);
-        delay(400);
+        delay(1000);
     }
 }
 
@@ -83,41 +93,28 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
     Serial.begin(115200); // Init Serial for debugging
     while (!Serial)
         ; // Wait until Serial is available
-
+    pinMode(ledPin, OUTPUT);
     // Print debug messages
     Serial.println("NULA ESP32C6 Mini test begin!");
     delay(20);
 
-    // Test I2C
-    if (!scanI2CDevice(easyCaddr))
-    {
-        // I2C failed
-        Serial.println("EasyC test failed!");
-
-        char addrBuffer[60];
-        // Format the address as a hexadecimal string
-        sprintf(addrBuffer, "The test address is: 0x%02X", easyCaddr);
-        Serial.println(addrBuffer);
-
-        sprintf(addrBuffer, "Is an I2C device using address 0x%02X connected over easyC?", easyCaddr);
-        Serial.println(addrBuffer);
-
-        blinkRedAndHalt();
-    }
-
-    Serial.println("EasyC test OK!");
-
-    // All tests OK!
-    // Wait for button press and blink LED
-    int buttonPin = 9;
-    pinMode(buttonPin, INPUT);
-
     Serial.println("Press USER button!");
+    pinMode(buttonPin, INPUT);
     // Set up timeout for button press
     unsigned long startTime = millis();
+    unsigned long lastBlink = millis();
+    unsigned long startTimeBlink;
+    bool ledState = 0;
     while (digitalRead(buttonPin) == 1)
     {
-        digitalWrite(ledPin, HIGH);
+        startTimeBlink = millis();
+
+        if (startTimeBlink - lastBlink >=200)
+        {
+            ledState = !ledState;
+            digitalWrite(ledPin, ledState);
+            lastBlink = millis();
+        }
 
         // Check for timeout
         if (millis() - startTime > buttonPressTimeoutMs)
@@ -125,8 +122,9 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
             blinkRedAndHalt(); // Call function if timeout occurs
         }
     }
+        Serial.println("Button pressed!");
 
-    Serial.println("Button pressed!");
+    digitalWrite(ledPin, HIGH);
 
     Serial.print("Connecting to WiFi...");
 
@@ -149,10 +147,28 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
     Serial.println("\nWiFi Test Passed!");
 
     WiFi.disconnect();
+    // Test I2C
+    Serial.println("Qwiic Test");
+    if (!scanI2CDevice(easyCaddr))
+    {
+        // I2C failed
+        Serial.println("EasyC test failed!");
 
+        char addrBuffer[60];
+        // Format the address as a hexadecimal string
+        sprintf(addrBuffer, "The test address is: 0x%02X", easyCaddr);
+        Serial.println(addrBuffer);
 
+        sprintf(addrBuffer, "Is an I2C device using address 0x%02X connected over easyC?", easyCaddr);
+        Serial.println(addrBuffer);
+
+        blinkRedAndHalt();
+    }
+
+    Serial.println("Qwiic test OK!");
 
     Serial.println("Test complete!");
+
 
     // Now save into EEPROM that the board has been previously configured
     EEPROM.put(eepromAddress, boardHasBeenConfigured);
@@ -162,10 +178,20 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
 /**
  * @brief Loop function which fades the LED for ESP8266
  */
-void boardSpecificLoop()
-{
-    digitalWrite(ledPin, HIGH);
+void boardSpecificLoop() {
+  unsigned long currentTime = millis();
+    if (currentTime - lastFadeTime >= fadeDelay) {
+        lastFadeTime = currentTime;
 
-    delay(30); // Wait to see the dimming effect
+        // Write brightness using PWM
+        analogWrite(ledPin, brightness);
+
+        brightness += fadeAmount;
+
+        // Reverse direction at ends
+        if (brightness <= 0 || brightness >= 255) {
+            fadeAmount = -fadeAmount;
+        }
+    }
 }
 
