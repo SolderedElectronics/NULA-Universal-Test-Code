@@ -9,7 +9,7 @@
 
 // Configure EEPROM parameters
 #define EEPROM_SIZE 16
-int boardHasBeenConfigured = 111; // This symbolic value
+int boardHasBeenConfigured = 112; // This symbolic value
 int eepromAddress = 0;            // will be written at this address
 // If read back, it will mean that the device has previously been tested
 // If required to test again, change the first value to some other number
