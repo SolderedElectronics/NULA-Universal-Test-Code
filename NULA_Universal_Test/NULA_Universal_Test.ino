@@ -29,6 +29,8 @@ const unsigned long wifiTimeoutMs = 20000; // 20 seconds by default
 // Include the appropriate header file based on the board
 #ifdef ARDUINO_SOLDERED_NULA_MINI_ESP32C6
 #include "MiniESP32C6.hpp"
+#elif defined(ARDUINO_ESP32S3)
+#include"DeepSleepESP32-S3.hpp"
 #else
 #error "Unsupported board!"
 #endif
