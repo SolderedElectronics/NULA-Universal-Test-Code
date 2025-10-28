@@ -90,7 +90,7 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
     {
         // This device was tested before
         // Go straight to loop
-        //return;
+        return;
     }
 
     // Set BLUE LED to signify test begin
