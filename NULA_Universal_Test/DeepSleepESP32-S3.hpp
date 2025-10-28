@@ -1,22 +1,27 @@
+
 // Code for Dasduino ConnectPLUS (ESP32)
-#ifndef CONNECTPLUS_HPP
-#define CONNECTPLUS_HPP
+#ifndef DEEPSLEEP_HPP
+#define DEEPSLEEP_HPP
 
 // Include required libs
 #include <Arduino.h>
 #include <EEPROM.h>
-#include "WS2812-SOLDERED.h"
+#include <WiFi.h>
+#include <Adafruit_NeoPixel.h>
 #include "Wire.h"
 
 // Configure EEPROM parameters
 #define EEPROM_SIZE 16
-int boardHasBeenConfigured = 111; // This symbolic value
+int boardHasBeenConfigured = 112; // This symbolic value
 int eepromAddress = 0;            // will be written at this address
 // If read back, it will mean that the device has previously been tested
 // If required to test again, change the first value to some other number
 
+const char* ssid = "Soldered-testingPurposes";
+const char* pass = "Testing443";
+
 // Configure WSLED parameters
-WS2812 pixels(1, 2); // WSLED object
+Adafruit_NeoPixel pixels(1, 2); // WSLED object
 int brightness = 5;              // how bright the LED is
 int fadeAmount = 1;              // How much to increment/decrement the brightness when fading
 int maxBrightness = 40;          // Maximum brightness level
@@ -73,7 +78,7 @@ void blinkRedAndHalt()
  * @param easyCaddr the easyC address to test
  * @param buttonPressTimeoutMs How many ms to wait for button press before blocking the code
  */
-void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs)
+void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, unsigned long wifiTimeoutMs)
 {
     pixels.begin(); // Init NeoPixel
     
@@ -85,7 +90,7 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs)
     {
         // This device was tested before
         // Go straight to loop
-        return;
+        //return;
     }
 
     // Set BLUE LED to signify test begin
@@ -99,14 +104,15 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs)
         ; // Wait until Serial is available
 
     // Print debug messages
-    Serial.println("Dasduino CONNECTPLUS test begin!");
+    Serial.println("NULA DeepSleep test begin!");
     delay(20);
 
+    Serial.println("Qwiic test start!");
     // Test I2C
     if (!scanI2CDevice(easyCaddr))
     {
         // I2C failed
-        Serial.println("EasyC test failed!");
+        Serial.println("Qwiic test failed!");
 
         char addrBuffer[60];
         // Format the address as a hexadecimal string
@@ -119,16 +125,38 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs)
         blinkRedAndHalt();
     }
 
-    Serial.println("EasyC test OK!");
+    Serial.println("Qwiic test OK!");
+
+    Serial.print("Connecting to WiFi...");
+
+    // Connect to the WiFi network.
+    WiFi.mode(WIFI_MODE_STA);
+    WiFi.begin(ssid, pass);
+
+    // Set up timeout for wifi connection
+    unsigned long startTime = millis();
+
+    while (WiFi.status() != WL_CONNECTED)
+    {
+        delay(500);
+        Serial.print(".");
+        if (millis() - startTime > wifiTimeoutMs)
+        {
+            blinkRedAndHalt(); // Call function if timeout occurs
+        }
+    }
+    Serial.println("\nWiFi Test Passed!");
+
+    WiFi.disconnect();
 
     // All tests OK!
     // Wait for button press and blink LED
     int buttonPin = 0;
-    pinMode(buttonPin, INPUT);
+    pinMode(buttonPin, INPUT_PULLUP);
 
     Serial.println("Press USER button!");
     // Set up timeout for button press
-    unsigned long startTime = millis();
+    startTime = millis();
     while (digitalRead(buttonPin) == 1)
     {
         // Blink the LED blue
