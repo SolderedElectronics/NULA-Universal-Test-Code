@@ -1,11 +1,11 @@
-
-// Code for NULA DeepSleep (ESP32-S3)
 #pragma once
+
 
 // Include required libs
 #include <Arduino.h>
 #include <EEPROM.h>
 #include <WiFi.h>
+#include <SD.h>
 #include <Adafruit_NeoPixel.h>
 #include "Wire.h"
 
@@ -103,8 +103,37 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
         ; // Wait until Serial is available
 
     // Print debug messages
-    Serial.println("NULA DeepSleep test begin!");
+    Serial.println("NULA RP2350 test begin!");
     delay(20);
+
+    // Wait for button press and blink LED
+    int buttonPin = 27;
+    pinMode(buttonPin, INPUT_PULLUP);
+
+    Serial.println("Press USER button!");
+    // Set up timeout for button press
+    unsigned long startTime = millis();
+    while (digitalRead(buttonPin) == 1)
+    {
+        // Blink the LED blue
+        pixels.setPixelColor(0, pixels.Color(0x01, 0x01, 0x23));
+        pixels.show();
+        delay(100);
+        pixels.clear();
+        pixels.show();
+        delay(100);
+
+        // Check for timeout
+        if (millis() - startTime > buttonPressTimeoutMs)
+        {
+            blinkRedAndHalt(); // Call function if timeout occurs
+        }
+    }
+    Serial.println("Button pressed!");
+
+    // Set BLUE LED
+    pixels.setPixelColor(0, pixels.Color(0x01, 0x01, 0x23));
+    pixels.show();
 
     Serial.println("Qwiic test start!");
     // Test I2C
@@ -128,12 +157,10 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
 
     Serial.print("Connecting to WiFi...");
 
-    // Connect to the WiFi network.
-    WiFi.mode(WIFI_MODE_STA);
     WiFi.begin(ssid, pass);
 
     // Set up timeout for wifi connection
-    unsigned long startTime = millis();
+    startTime = millis();
 
     while (WiFi.status() != WL_CONNECTED)
     {
@@ -148,32 +175,30 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
 
     WiFi.disconnect();
 
-    // All tests OK!
-    // Wait for button press and blink LED
-    int buttonPin = 0;
-    pinMode(buttonPin, INPUT_PULLUP);
+    // Set SDEnable pin to low to enable SD Card
+    pinMode(4, OUTPUT);
+    digitalWrite(4,LOW);
 
-    Serial.println("Press USER button!");
-    // Set up timeout for button press
-    startTime = millis();
-    while (digitalRead(buttonPin) == 1)
-    {
-        // Blink the LED blue
-        pixels.setPixelColor(0, pixels.Color(0x01, 0x01, 0x23));
-        pixels.show();
-        delay(100);
-        pixels.clear();
-        pixels.show();
-        delay(100);
+    // SD card test
+    bool sdInitialized = false;
 
-        // Check for timeout
-        if (millis() - startTime > buttonPressTimeoutMs)
-        {
-            blinkRedAndHalt(); // Call function if timeout occurs
-        }
+
+    SPI.setRX(0);
+    SPI.setTX(3);
+    SPI.setSCK(2);
+    sdInitialized = SD.begin(1);
+
+    if (!sdInitialized) {
+        Serial.println("SD card FAIL!");
+        blinkRedAndHalt();
+    } else {
+        Serial.println("SD card test ok!");
+
     }
 
-    Serial.println("Button pressed!");
+    // All tests OK!
+    
+
     Serial.println("Test complete!");
 
     // Now save into EEPROM that the board has been previously configured
