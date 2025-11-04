@@ -179,6 +179,9 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
     pinMode(4, OUTPUT);
     digitalWrite(4,LOW);
 
+    // Small delay before initializing the sd card
+    delay(200);
+
     // SD card test
     bool sdInitialized = false;
 
