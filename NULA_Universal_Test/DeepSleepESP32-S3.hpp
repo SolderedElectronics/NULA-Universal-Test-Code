@@ -20,7 +20,7 @@ const char* ssid = "Soldered-testingPurposes";
 const char* pass = "Testing443";
 
 // Configure WSLED parameters
-Adafruit_NeoPixel pixels(1, 26); // WSLED object
+Adafruit_NeoPixel pixels(1, 2); // WSLED object
 int brightness = 5;              // how bright the LED is
 int fadeAmount = 1;              // How much to increment/decrement the brightness when fading
 int maxBrightness = 40;          // Maximum brightness level
