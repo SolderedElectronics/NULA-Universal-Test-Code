@@ -33,6 +33,8 @@ const unsigned long wifiTimeoutMs = 20000; // 20 seconds by default
 #include "DeepSleepESP32-S3.hpp"
 #elif defined(ARDUINO_SOLDERED_NULA_RP2350)
 #include "RP2350.hpp"
+#elif defined(__AVR_ATmega328P__)
+#include "Core.hpp"
 #else
 #error "Unsupported board!"
 #endif
