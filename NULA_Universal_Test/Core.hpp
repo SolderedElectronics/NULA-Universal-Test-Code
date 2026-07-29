@@ -126,17 +126,23 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
     // Set up timeout for button press
     unsigned long startTime = millis();
     pinMode(13, OUTPUT); // Set onboard simple LED mode, it will also be tested
+    unsigned long lastBlink = millis();
+    bool ledState = false;
+    // Poll the button continuously - the blinking is non-blocking so no press can be missed
     while (digitalRead(buttonPin) == 1)
     {
-        // Blink the LED blue
-        pixels.setPixelColor(0, pixels.Color(0x01, 0x01, 0x23));
-        pixels.show();
-        digitalWrite(13, HIGH); // blink onboard LED too
-        delay(100);
-        pixels.clear();
-        pixels.show();
-        digitalWrite(13, LOW);
-        delay(100);
+        // Blink the LED blue every 100ms without blocking the button polling
+        if (millis() - lastBlink >= 100)
+        {
+            lastBlink = millis();
+            ledState = !ledState;
+            if (ledState)
+                pixels.setPixelColor(0, pixels.Color(0x01, 0x01, 0x23));
+            else
+                pixels.clear();
+            pixels.show();
+            digitalWrite(13, ledState); // blink onboard LED too
+        }
 
         // Check for timeout
         if (millis() - startTime > buttonPressTimeoutMs)

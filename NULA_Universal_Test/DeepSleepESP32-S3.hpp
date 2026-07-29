@@ -156,22 +156,36 @@ void boardSpecificSetup(uint8_t easyCaddr, unsigned long buttonPressTimeoutMs, u
     Serial.println("Press USER button!");
     // Set up timeout for button press
     startTime = millis();
+    unsigned long lastBlink = millis();
+    bool ledState = false;
+    // Poll the button continuously - the blinking is non-blocking so no press can be missed
     while (digitalRead(buttonPin) == 1)
     {
-        // Blink the LED blue
-        pixels.setPixelColor(0, pixels.Color(0x01, 0x01, 0x23));
-        pixels.show();
-        delay(100);
-        pixels.clear();
-        pixels.show();
-        delay(100);
+        // Blink the LED blue every 100ms without blocking the button polling
+        if (millis() - lastBlink >= 100)
+        {
+            lastBlink = millis();
+            ledState = !ledState;
+            if (ledState)
+                pixels.setPixelColor(0, pixels.Color(0x01, 0x01, 0x23));
+            else
+                pixels.clear();
+            pixels.show();
+        }
 
         // Check for timeout
         if (millis() - startTime > buttonPressTimeoutMs)
         {
             blinkRedAndHalt(); // Call function if timeout occurs
         }
+
+        delay(1); // Short delay to keep the polling loop from hogging the CPU
     }
+
+    // Debounce the press and wait for release so the button state is settled
+    delay(30);
+    while (digitalRead(buttonPin) == 0)
+        ;
 
     Serial.println("Button pressed!");
     Serial.println("Test complete!");

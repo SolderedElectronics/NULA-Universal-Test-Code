@@ -31,6 +31,10 @@ const unsigned long wifiTimeoutMs = 20000; // 20 seconds by default
 #include "MiniESP32C6.hpp"
 #elif defined(ARDUINO_ESP32S3_DEV)
 #include "DeepSleepESP32-S3.hpp"
+#elif defined(ARDUINO_SOLDERED_NULA_DUAL_ESP32C5)
+#include "DualESP32-C5.hpp"
+#elif defined(ARDUINO_SOLDERED_NULA_ETHERNET)
+#include "EthernetW55RP20.hpp"
 #elif defined(ARDUINO_SOLDERED_NULA_RP2350)
 #include "RP2350.hpp"
 #elif defined(__AVR_ATmega328P__)
